@@ -1,17 +1,20 @@
 "use client"
 
 import { useState, useEffect, useTransition } from "react"
-import type { StoreOrder, StoreCountry, StoreState, AddressParams } from "@spree/sdk"
+import Link from "next/link"
+import type { StoreOrder, StoreCountry, StoreState, StoreAddress, AddressParams } from "@spree/sdk"
+import { AddressSelector } from "./AddressSelector"
 
 interface AddressStepProps {
   order: StoreOrder
   countries: StoreCountry[]
+  savedAddresses: StoreAddress[]
+  isAuthenticated: boolean
+  signInUrl: string
   fetchStates: (countryIso: string) => Promise<StoreState[]>
   onSubmit: (data: {
     email: string
     ship_address: AddressParams
-    bill_address?: AddressParams
-    use_shipping_for_billing: boolean
   }) => Promise<void>
   processing: boolean
 }
@@ -92,6 +95,9 @@ function formDataToAddress(data: AddressFormData): AddressParams {
 export function AddressStep({
   order,
   countries,
+  savedAddresses,
+  isAuthenticated,
+  signInUrl,
   fetchStates,
   onSubmit,
   processing,
@@ -100,14 +106,8 @@ export function AddressStep({
   const [shipAddress, setShipAddress] = useState<AddressFormData>(() =>
     addressToFormData(order.ship_address)
   )
-  const [billAddress, setBillAddress] = useState<AddressFormData>(() =>
-    addressToFormData(order.bill_address)
-  )
-  const [useShippingForBilling, setUseShippingForBilling] = useState(true)
   const [shipStates, setShipStates] = useState<StoreState[]>([])
-  const [billStates, setBillStates] = useState<StoreState[]>([])
   const [isPendingShip, startTransitionShip] = useTransition()
-  const [isPendingBill, startTransitionBill] = useTransition()
 
   // Load states when shipping country changes
   useEffect(() => {
@@ -132,36 +132,11 @@ export function AddressStep({
     }
   }, [shipAddress.country_iso, fetchStates])
 
-  // Load states when billing country changes
-  useEffect(() => {
-    if (useShippingForBilling || !billAddress.country_iso) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setBillStates([])
-      return
-    }
-
-    let cancelled = false
-
-    startTransitionBill(() => {
-      fetchStates(billAddress.country_iso).then((states) => {
-        if (!cancelled) {
-          setBillStates(states)
-        }
-      })
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [billAddress.country_iso, useShippingForBilling, fetchStates])
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSubmit({
       email,
       ship_address: formDataToAddress(shipAddress),
-      bill_address: useShippingForBilling ? undefined : formDataToAddress(billAddress),
-      use_shipping_for_billing: useShippingForBilling,
     })
   }
 
@@ -177,20 +152,40 @@ export function AddressStep({
     })
   }
 
-  const updateBillAddress = (field: keyof AddressFormData, value: string) => {
-    setBillAddress((prev) => {
-      const updated = { ...prev, [field]: value }
-      // Clear state when country changes
-      if (field === "country_iso") {
-        updated.state_abbr = ""
-        updated.state_name = ""
-      }
-      return updated
+  const handleSelectSavedAddress = (address: StoreAddress) => {
+    setShipAddress({
+      firstname: address.firstname || "",
+      lastname: address.lastname || "",
+      address1: address.address1 || "",
+      address2: address.address2 || "",
+      city: address.city || "",
+      zipcode: address.zipcode || "",
+      phone: address.phone || "",
+      company: address.company || "",
+      country_iso: address.country_iso || "",
+      state_abbr: address.state_abbr || "",
+      state_name: address.state_name || "",
     })
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Sign-in prompt for guests */}
+      {!isAuthenticated && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-800">
+            Already have an account?{" "}
+            <Link
+              href={signInUrl}
+              className="font-medium text-blue-600 hover:text-blue-700 underline"
+            >
+              Sign in
+            </Link>
+            {" "}to access your saved addresses and order history.
+          </p>
+        </div>
+      )}
+
       {/* Contact Information */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
@@ -204,48 +199,40 @@ export function AddressStep({
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            disabled={isAuthenticated}
+            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
             placeholder="you@example.com"
           />
+          {isAuthenticated && (
+            <p className="mt-1 text-xs text-gray-500">
+              Using your account email address
+            </p>
+          )}
         </div>
       </div>
 
       {/* Shipping Address */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Shipping Address</h2>
-        <AddressForm
-          address={shipAddress}
-          countries={countries}
-          states={shipStates}
-          loadingStates={isPendingShip}
-          onChange={updateShipAddress}
-          idPrefix="ship"
-        />
-      </div>
-
-      {/* Billing Address */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Billing Address</h2>
-        <div className="mb-4">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={useShippingForBilling}
-              onChange={(e) => setUseShippingForBilling(e.target.checked)}
-              className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-            />
-            <span className="ml-2 text-sm text-gray-600">Same as shipping address</span>
-          </label>
-        </div>
-
-        {!useShippingForBilling && (
-          <AddressForm
-            address={billAddress}
+        {isAuthenticated && savedAddresses.length > 0 ? (
+          <AddressSelector
+            savedAddresses={savedAddresses}
+            currentAddress={shipAddress}
             countries={countries}
-            states={billStates}
-            loadingStates={isPendingBill}
-            onChange={updateBillAddress}
-            idPrefix="bill"
+            states={shipStates}
+            loadingStates={isPendingShip}
+            onChange={updateShipAddress}
+            onSelectSavedAddress={handleSelectSavedAddress}
+            idPrefix="ship"
+          />
+        ) : (
+          <AddressForm
+            address={shipAddress}
+            countries={countries}
+            states={shipStates}
+            loadingStates={isPendingShip}
+            onChange={updateShipAddress}
+            idPrefix="ship"
           />
         )}
       </div>
