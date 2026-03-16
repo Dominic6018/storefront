@@ -6,6 +6,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -77,148 +85,156 @@ export default function RegisterPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
-        <p className="mt-2 text-gray-500">Sign up to start shopping with us.</p>
-      </div>
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle>Create Account</CardTitle>
+          <CardDescription>Sign up to start shopping with us.</CardDescription>
+        </CardHeader>
 
-      <div className="mt-8 bg-white rounded-xl border border-gray-200 p-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <CircleAlert />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <CircleAlert />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-          <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <FieldLabel htmlFor="firstName">First name</FieldLabel>
+                <Input
+                  type="text"
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  placeholder="John"
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="lastName">Last name</FieldLabel>
+                <Input
+                  type="text"
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  placeholder="Doe"
+                />
+              </Field>
+            </div>
+
             <Field>
-              <FieldLabel htmlFor="firstName">First name</FieldLabel>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
               <Input
-                type="text"
-                id="firstName"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="John"
+                placeholder="you@example.com"
               />
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="lastName">Last name</FieldLabel>
-              <Input
-                type="text"
-                id="lastName"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-                placeholder="Doe"
-              />
+              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <div className="absolute right-1 top-1/2 -translate-y-1/2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
             </Field>
-          </div>
 
-          <Field>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
-            <Input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="you@example.com"
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="password">Password</FieldLabel>
-            <div className="relative">
-              <Input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                placeholder="••••••••"
-                className="pr-10"
-              />
-              <div className="absolute right-1 top-1/2 -translate-y-1/2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </Button>
+            <Field>
+              <FieldLabel htmlFor="passwordConfirmation">
+                Confirm Password
+              </FieldLabel>
+              <div className="relative">
+                <Input
+                  type={showPasswordConfirmation ? "text" : "password"}
+                  id="passwordConfirmation"
+                  value={passwordConfirmation}
+                  onChange={(e) => setPasswordConfirmation(e.target.value)}
+                  required
+                  minLength={6}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <div className="absolute right-1 top-1/2 -translate-y-1/2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() =>
+                      setShowPasswordConfirmation(!showPasswordConfirmation)
+                    }
+                    aria-label={
+                      showPasswordConfirmation
+                        ? "Hide password"
+                        : "Show password"
+                    }
+                  >
+                    {showPasswordConfirmation ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </Field>
+            </Field>
 
-          <Field>
-            <FieldLabel htmlFor="passwordConfirmation">
-              Confirm Password
-            </FieldLabel>
-            <div className="relative">
-              <Input
-                type={showPasswordConfirmation ? "text" : "password"}
-                id="passwordConfirmation"
-                value={passwordConfirmation}
-                onChange={(e) => setPasswordConfirmation(e.target.value)}
-                required
-                minLength={6}
-                placeholder="••••••••"
-                className="pr-10"
-              />
-              <div className="absolute right-1 top-1/2 -translate-y-1/2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() =>
-                    setShowPasswordConfirmation(!showPasswordConfirmation)
-                  }
-                  aria-label={
-                    showPasswordConfirmation ? "Hide password" : "Show password"
-                  }
-                >
-                  {showPasswordConfirmation ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </Button>
-              </div>
+            <div className="w-full">
+              <Button
+                type="submit"
+                disabled={submitting}
+                size="lg"
+                className="w-full"
+              >
+                {submitting ? "Creating account..." : "Create Account"}
+              </Button>
             </div>
-          </Field>
+          </form>
+        </CardContent>
 
-          <div className="w-full">
-            <Button
-              type="submit"
-              disabled={submitting}
-              size="lg"
-              className="w-full"
+        <CardFooter className="justify-center">
+          <p className="text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link
+              href={`${basePath}/account`}
+              className="text-primary hover:text-primary/70 font-medium"
             >
-              {submitting ? "Creating account..." : "Create Account"}
-            </Button>
-          </div>
-        </form>
-
-        <div className="mt-6 text-center text-sm">
-          <span className="text-gray-500">Already have an account? </span>
-          <Link
-            href={`${basePath}/account`}
-            className="text-primary hover:text-primary/70 font-medium"
-          >
-            Sign in
-          </Link>
-        </div>
-      </div>
+              Sign in
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
